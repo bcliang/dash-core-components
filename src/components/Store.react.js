@@ -12,7 +12,11 @@ import PropTypes from 'prop-types';
 function dataChanged(newData, oldData) {
     const oldNull = isNil(oldData);
     const newNull = isNil(newData);
+
     if (oldNull || newNull) {
+        if (oldNull && newNull) {
+            return false;
+        }
         return newData !== oldData;
     }
     const newType = type(newData);
@@ -88,7 +92,12 @@ class WebStore {
     }
 
     getItem(key) {
-        return JSON.parse(this._storage.getItem(key));
+        let val = this._storage.getItem(key);
+        if (val === 'undefined') {
+            return null;
+        }
+
+        return JSON.parse(val);
     }
 
     setItem(key, value) {
