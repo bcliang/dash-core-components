@@ -92,7 +92,7 @@ class WebStore {
     }
 
     getItem(key) {
-        let val = this._storage.getItem(key);
+        const val = this._storage.getItem(key);
         if (val === 'undefined') {
             return null;
         }
