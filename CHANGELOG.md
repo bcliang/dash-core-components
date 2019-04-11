@@ -2,12 +2,34 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## [0.46.0] - 2019-04-10
 ### Added
 - `extendData` prop for `Graph` component. This feeds `Plotly.extendTraces` for incremental data updates. [#461](https://github.com/plotly/dash-core-components/pull/461)
 
+### Changed
+[#508](https://github.com/plotly/dash-core-components/pull/508)
+- Upgrade from React 15.4.2 to 16.8.6
+- Upgrade from react-date 12.3.0 to 20.1.0
+
 ### Fixed
 - Fix unnecessary `loading_state` prop for `Input` component. [#498](https://github.com/plotly/dash-core-components/issues/498)
+- Ensure `DatePickerSingle` callbacks fire with cleared dates. [#511](https://github.com/plotly/dash-core-components/pull/511)
+- Fixes incorrect default values for `config` prop of `Graph`. [#515](https://github.com/plotly/dash-core-components/pull/515)
+
+### Updated
+- Upgraded plotly.js to 1.47.0 [#516](https://github.com/plotly/dash-core-components/pull/516)
+  - [Feature release 1.47.0](https://github.com/plotly/plotly.js/releases/tag/v1.47.0) which contains:
+    - New `volume` gl3d trace type
+    - Interactive node grouping for Sankey diagrams, using box or lasso selection
+    - Add way for Plotly.toImage and Plotly.downloadImage to export images with current graph width/height by passing width/height option as null
+    - Improvements to hover labels, legends, and more
+  - [Feature release 1.46.0](https://github.com/plotly/plotly.js/releases/tag/v1.46.0) which contains:
+    - New `waterfall` trace type
+    - New `sunburst` trace type
+    - Implement connectgaps on surface traces
+    - Implement hovertemplate for box and violin points
+    - Display hover labels above modebar, ensuring that the hover labels are always visible within the graph div
+  - Patch releases [1.46.1](https://github.com/plotly/plotly.js/releases/tag/v1.46.1), [1.45.3](https://github.com/plotly/plotly.js/releases/tag/v1.45.3), [1.45.2](https://github.com/plotly/plotly.js/releases/tag/v1.45.2), and [1.45.1](https://github.com/plotly/plotly.js/releases/tag/v1.45.1) containing numerous bug fixes
 
 ## [0.45.0] - 2019-03-25
 ### Added
