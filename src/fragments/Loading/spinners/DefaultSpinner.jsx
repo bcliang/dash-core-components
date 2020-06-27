@@ -15,7 +15,7 @@ const DefaultSpinner = ({
     let debugTitle;
     if (debug) {
         debugTitle = (
-            <h3 className="dash-default-spinner .dash-loading-title">
+            <h3 className="dash-loading-title">
                 Loading {status.component_name}
                 's {status.prop_name}
             </h3>
@@ -116,7 +116,7 @@ DefaultSpinner.propTypes = {
     color: PropTypes.string,
     className: PropTypes.string,
     fullscreen: PropTypes.bool,
-    style: PropTypes.bool,
+    style: PropTypes.object,
     debug: PropTypes.bool,
 };
 

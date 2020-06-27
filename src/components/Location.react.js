@@ -1,6 +1,8 @@
 import {Component} from 'react';
 import PropTypes from 'prop-types';
 import {type} from 'ramda';
+
+import {History} from '@plotly/dash-component-plugins';
 /* global window:true */
 
 /**
@@ -11,6 +13,7 @@ export default class Location extends Component {
     constructor(props) {
         super(props);
         this.updateLocation = this.updateLocation.bind(this);
+        this.onLocationChange = this.onLocationChange.bind(this);
     }
 
     updateLocation(props) {
@@ -81,27 +84,39 @@ export default class Location extends Component {
         }
     }
 
-    componentDidMount() {
-        const listener = () => {
-            return () => {
-                const {setProps} = this.props;
-                setProps({
-                    pathname: window.location.pathname,
-                    href: window.location.href,
-                    hash: window.location.hash,
-                    search: window.location.search,
-                });
-            };
-        };
-        window.addEventListener('onpopstate', listener());
-        window.onpopstate = listener('POP');
+    onLocationChange() {
+        const {setProps} = this.props;
+        const propsToChange = {};
 
-        // non-standard, emitted by Link.react
-        window.addEventListener('onpushstate', listener());
+        if (this.props.pathname !== window.location.pathname) {
+            propsToChange.pathname = window.location.pathname;
+        }
+        if (this.props.href !== window.location.href) {
+            propsToChange.href = window.location.href;
+        }
+        if (this.props.hash !== window.location.hash) {
+            propsToChange.hash = window.location.hash;
+        }
+        if (this.props.search !== window.location.search) {
+            propsToChange.search = window.location.search;
+        }
+
+        setProps(propsToChange);
+
+        History.dispatchChangeEvent();
+    }
+
+    componentDidMount() {
+        window.onpopstate = this.onLocationChange;
+
+        window.addEventListener(
+            '_dashprivate_pushstate',
+            this.onLocationChange
+        );
         this.updateLocation(this.props);
     }
 
-    componentWillReceiveProps(nextProps) {
+    UNSAFE_componentWillReceiveProps(nextProps) {
         this.updateLocation(nextProps);
     }
 
@@ -111,6 +126,11 @@ export default class Location extends Component {
 }
 
 Location.propTypes = {
+    /**
+     * The ID of this component, used to identify dash components
+     * in callbacks. The ID needs to be unique across all of the
+     * components in an app.
+     */
     id: PropTypes.string.isRequired,
 
     /** pathname in window.location - e.g., "/my/full/pathname" */
@@ -125,6 +145,9 @@ Location.propTypes = {
     /** Refresh the page when the location is updated? */
     refresh: PropTypes.bool,
 
+    /**
+     * Dash-assigned callback that gets fired when the value changes.
+     */
     setProps: PropTypes.func,
 };
 

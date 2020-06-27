@@ -1,24 +1,8 @@
 import PropTypes from 'prop-types';
-import {isNil, pluck, omit, type} from 'ramda';
-import React, {Component} from 'react';
-import ReactDropdown from 'react-virtualized-select';
-import createFilterOptions from 'react-select-fast-filter-options';
-import './css/react-virtualized-select@3.1.0.css';
-import './css/react-virtualized@9.9.0.css';
+import React, {Component, lazy, Suspense} from 'react';
+import dropdown from '../utils/LazyLoader/dropdown';
 
-// Custom tokenizer, see https://github.com/bvaughn/js-search/issues/43
-// Split on spaces
-const REGEX = /\s+/;
-const TOKENIZER = {
-    tokenize(text) {
-        return text.split(REGEX).filter(
-            // Filter empty tokens
-            text => text
-        );
-    },
-};
-
-const DELIMETER = ',';
+const RealDropdown = lazy(dropdown);
 
 /**
  * Dropdown is an interactive dropdown element for selecting one or more
@@ -31,87 +15,26 @@ const DELIMETER = ',';
  * which have the benefit of showing the users all of the items at once.
  */
 export default class Dropdown extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            filterOptions: createFilterOptions({
-                options: props.options,
-                tokenizer: TOKENIZER,
-            }),
-        };
-    }
-
-    componentWillReceiveProps(newProps) {
-        if (newProps.options !== this.props.options) {
-            this.setState({
-                filterOptions: createFilterOptions({
-                    options: newProps.options,
-                    tokenizer: TOKENIZER,
-                }),
-            });
-        }
-    }
-
     render() {
-        const {
-            id,
-            multi,
-            options,
-            setProps,
-            style,
-            loading_state,
-            value,
-        } = this.props;
-        const {filterOptions} = this.state;
-        let selectedValue;
-        if (type(value) === 'array') {
-            selectedValue = value.join(DELIMETER);
-        } else {
-            selectedValue = value;
-        }
         return (
-            <div
-                id={id}
-                style={style}
-                data-dash-is-loading={
-                    (loading_state && loading_state.is_loading) || undefined
-                }
-            >
-                <ReactDropdown
-                    filterOptions={filterOptions}
-                    options={options}
-                    value={selectedValue}
-                    onChange={selectedOption => {
-                        if (multi) {
-                            let value;
-                            if (isNil(selectedOption)) {
-                                value = [];
-                            } else {
-                                value = pluck('value', selectedOption);
-                            }
-                            setProps({value});
-                        } else {
-                            let value;
-                            if (isNil(selectedOption)) {
-                                value = null;
-                            } else {
-                                value = selectedOption.value;
-                            }
-                            setProps({value});
-                        }
-                    }}
-                    {...omit(['setProps', 'value'], this.props)}
-                />
-            </div>
+            <Suspense fallback={null}>
+                <RealDropdown {...this.props} />
+            </Suspense>
         );
     }
 }
 
 Dropdown.propTypes = {
+    /**
+     * The ID of this component, used to identify dash components
+     * in callbacks. The ID needs to be unique across all of the
+     * components in an app.
+     */
     id: PropTypes.string,
 
     /**
-     * An array of options
+     * An array of options {label: [string|number], value: [string|number]},
+     * an optional disabled field can be used for each option
      */
     options: PropTypes.arrayOf(
         PropTypes.exact({
@@ -124,15 +47,22 @@ Dropdown.propTypes = {
             /**
              * The value of the dropdown. This value
              * corresponds to the items specified in the
-             * `values` property.
+             * `value` property.
              */
             value: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
                 .isRequired,
 
             /**
-             * If true, this dropdown is disabled and items can't be selected.
+             * If true, this option is disabled and cannot be selected.
              */
             disabled: PropTypes.bool,
+
+            /**
+             * The HTML 'title' attribute for the option. Allows for
+             * information on hover. For more information on this attribute,
+             * see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/title
+             */
+            title: PropTypes.string,
         })
     ),
 
@@ -146,10 +76,16 @@ Dropdown.propTypes = {
      */
     value: PropTypes.oneOfType([
         PropTypes.string,
-        PropTypes.arrayOf(PropTypes.string),
         PropTypes.number,
-        PropTypes.arrayOf(PropTypes.number),
+        PropTypes.arrayOf(
+            PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+        ),
     ]),
+
+    /**
+     * height of each option. Can be increased when label lengths would wrap around
+     */
+    optionHeight: PropTypes.number,
 
     /**
      * className of the dropdown element
@@ -164,7 +100,7 @@ Dropdown.propTypes = {
     clearable: PropTypes.bool,
 
     /**
-     * If true, the option is disabled
+     * If true, this dropdown is disabled and the selection cannot be changed.
      */
     disabled: PropTypes.bool,
 
@@ -184,10 +120,18 @@ Dropdown.propTypes = {
     searchable: PropTypes.bool,
 
     /**
+     * The value typed in the DropDown for searching.
+     */
+    search_value: PropTypes.string,
+
+    /**
      * Dash-assigned callback that gets fired when the input changes
      */
     setProps: PropTypes.func,
 
+    /**
+     * Defines CSS styles which will override styles previously set.
+     */
     style: PropTypes.object,
 
     /**
@@ -207,6 +151,35 @@ Dropdown.propTypes = {
          */
         component_name: PropTypes.string,
     }),
+
+    /**
+     * Used to allow user interactions in this component to be persisted when
+     * the component - or the page - is refreshed. If `persisted` is truthy and
+     * hasn't changed from its previous value, a `value` that the user has
+     * changed while using the app will keep that change, as long as
+     * the new `value` also matches what was given originally.
+     * Used in conjunction with `persistence_type`.
+     */
+    persistence: PropTypes.oneOfType([
+        PropTypes.bool,
+        PropTypes.string,
+        PropTypes.number,
+    ]),
+
+    /**
+     * Properties whose user interactions will persist after refreshing the
+     * component or the page. Since only `value` is allowed this prop can
+     * normally be ignored.
+     */
+    persisted_props: PropTypes.arrayOf(PropTypes.oneOf(['value'])),
+
+    /**
+     * Where persisted user changes will be stored:
+     * memory: only kept in memory, reset on page refresh.
+     * local: window.localStorage, data is kept after the browser quit.
+     * session: window.sessionStorage, data is cleared once the browser quit.
+     */
+    persistence_type: PropTypes.oneOf(['local', 'session', 'memory']),
 };
 
 Dropdown.defaultProps = {
@@ -214,4 +187,10 @@ Dropdown.defaultProps = {
     disabled: false,
     multi: false,
     searchable: true,
+    optionHeight: 35,
+    persisted_props: ['value'],
+    persistence_type: 'local',
 };
+
+export const propTypes = Dropdown.propTypes;
+export const defaultProps = Dropdown.defaultProps;

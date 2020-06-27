@@ -1,11 +1,8 @@
-import 'react-dates/initialize';
-
-import {SingleDatePicker} from 'react-dates';
-import moment from 'moment';
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, {Component, lazy, Suspense} from 'react';
+import datePickerSingle from '../utils/LazyLoader/datePickerSingle';
 
-import convertToMoment from '../utils/convertToMoment';
+const RealDateSingleRange = lazy(datePickerSingle);
 
 /**
  * DatePickerSingle is a tailor made component designed for selecting
@@ -18,113 +15,22 @@ import convertToMoment from '../utils/convertToMoment';
  * This component is based off of Airbnb's react-dates react component
  * which can be found here: https://github.com/airbnb/react-dates
  */
-
 export default class DatePickerSingle extends Component {
-    constructor() {
-        super();
-        this.isOutsideRange = this.isOutsideRange.bind(this);
-        this.onDateChange = this.onDateChange.bind(this);
-        this.state = {focused: false};
-    }
-
-    isOutsideRange(date) {
-        const {max_date_allowed, min_date_allowed} = convertToMoment(
-            this.props,
-            ['max_date_allowed', 'min_date_allowed']
-        );
-
-        return (
-            (min_date_allowed && date.isBefore(min_date_allowed)) ||
-            (max_date_allowed && date.isAfter(max_date_allowed))
-        );
-    }
-
-    onDateChange(date) {
-        const {setProps} = this.props;
-        const payload = {date: date ? date.format('YYYY-MM-DD') : null};
-        setProps(payload);
-    }
-
     render() {
-        const {focused} = this.state;
-
-        const {
-            calendar_orientation,
-            clearable,
-            day_size,
-            disabled,
-            display_format,
-            first_day_of_week,
-            is_RTL,
-            month_format,
-            number_of_months_shown,
-            placeholder,
-            reopen_calendar_on_clear,
-            show_outside_days,
-            stay_open_on_select,
-            with_full_screen_portal,
-            with_portal,
-            loading_state,
-            id,
-            style,
-            className,
-        } = this.props;
-
-        const {date, initial_visible_month} = convertToMoment(this.props, [
-            'date',
-            'initial_visible_month',
-        ]);
-
-        const verticalFlag = calendar_orientation !== 'vertical';
-
-        const DatePickerWrapperStyles = {
-            position: 'relative',
-            display: 'inline-block',
-            ...style,
-        };
-
         return (
-            <div
-                id={id}
-                style={DatePickerWrapperStyles}
-                className={className}
-                data-dash-is-loading={
-                    (loading_state && loading_state.is_loading) || undefined
-                }
-            >
-                <SingleDatePicker
-                    date={date}
-                    onDateChange={this.onDateChange}
-                    focused={focused}
-                    onFocusChange={({focused}) => this.setState({focused})}
-                    initialVisibleMonth={() =>
-                        date || initial_visible_month || moment()
-                    }
-                    isOutsideRange={this.isOutsideRange}
-                    numberOfMonths={number_of_months_shown}
-                    withPortal={with_portal && verticalFlag}
-                    withFullScreenPortal={
-                        with_full_screen_portal && verticalFlag
-                    }
-                    firstDayOfWeek={first_day_of_week}
-                    enableOutsideDays={show_outside_days}
-                    monthFormat={month_format}
-                    displayFormat={display_format}
-                    placeholder={placeholder}
-                    showClearDate={clearable}
-                    disabled={disabled}
-                    keepOpenOnDateSelect={stay_open_on_select}
-                    reopenPickerOnClearDate={reopen_calendar_on_clear}
-                    isRTL={is_RTL}
-                    orientation={calendar_orientation}
-                    daySize={day_size}
-                />
-            </div>
+            <Suspense fallback={null}>
+                <RealDateSingleRange {...this.props} />
+            </Suspense>
         );
     }
 }
 
 DatePickerSingle.propTypes = {
+    /**
+     * The ID of this component, used to identify dash components
+     * in callbacks. The ID needs to be unique across all of the
+     * components in an app.
+     */
     id: PropTypes.string,
 
     /**
@@ -283,6 +189,35 @@ DatePickerSingle.propTypes = {
          */
         component_name: PropTypes.string,
     }),
+
+    /**
+     * Used to allow user interactions in this component to be persisted when
+     * the component - or the page - is refreshed. If `persisted` is truthy and
+     * hasn't changed from its previous value, a `date` that the user has
+     * changed while using the app will keep that change, as long as
+     * the new `date` also matches what was given originally.
+     * Used in conjunction with `persistence_type`.
+     */
+    persistence: PropTypes.oneOfType([
+        PropTypes.bool,
+        PropTypes.string,
+        PropTypes.number,
+    ]),
+
+    /**
+     * Properties whose user interactions will persist after refreshing the
+     * component or the page. Since only `date` is allowed this prop can
+     * normally be ignored.
+     */
+    persisted_props: PropTypes.arrayOf(PropTypes.oneOf(['date'])),
+
+    /**
+     * Where persisted user changes will be stored:
+     * memory: only kept in memory, reset on page refresh.
+     * local: window.localStorage, data is kept after the browser quit.
+     * session: window.sessionStorage, data is cleared once the browser quit.
+     */
+    persistence_type: PropTypes.oneOf(['local', 'session', 'memory']),
 };
 
 DatePickerSingle.defaultProps = {
@@ -298,4 +233,9 @@ DatePickerSingle.defaultProps = {
     reopen_calendar_on_clear: false,
     clearable: false,
     disabled: false,
+    persisted_props: ['date'],
+    persistence_type: 'local',
 };
+
+export const propTypes = DatePickerSingle.propTypes;
+export const defaultProps = DatePickerSingle.defaultProps;

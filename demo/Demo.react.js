@@ -3,13 +3,13 @@ import ReactDOM from 'react-dom';
 import Playground from 'component-playground';
 import {
     Checklist,
+    DatePickerRange,
     Dropdown,
     Graph,
     Input,
     RadioItems,
     RangeSlider,
     Slider,
-    SyntaxHighlighter,
     Interval,
     Markdown,
     Upload
@@ -28,7 +28,7 @@ const markdown = \`
 
 Learn more in our [Dash user guide](https://dash-docs.herokuapp.com).
 
-![Image Alt Text](https://plot.ly/~chris/1638.png)
+![Image Alt Text](https://plotly.com/~chris/1638.png)
 
 ***
 
@@ -90,39 +90,6 @@ ReactDOM.render(<Controller/>, mountNode);
 `;
 
 
-const SyntaxHighlighterExample = `
-const properties = {
-    language: 'python',
-    theme: 'light',
-    customStyle: {},
-    codeTagProps: {},
-    useInlineStyles: true,
-    showLineNumbers: false,
-    startingLineNumber: 0,
-    lineNumberContainerStyle: {},
-    lineNumberStyle: {},
-    wrapLines: false,
-    lineStyle: {},
-    children: \`import Dash
-dash.layout = Div([
-    Graph(figure={'data': [{'x': [1, 2, 3]}]})
-]);
-
-def update_graph(lahlah):
-	return dict(updates=lahlah)
-
-<html>
-
-</html>
-function thisIsJavascript(test) {
-    console.log({test: that});
-}
-\`
-}
-
-ReactDOM.render(<SyntaxHighlighter {...properties}/>, mountNode);
-`
-
 const DropdownExample = `
 const properties = {
     id: 'my dropdown',
@@ -132,10 +99,11 @@ const properties = {
         {'label': 'Melons', 'value': 'melons', 'disabled': false},
         {'label': 'Apples', 'value': 'apples'},
         {'label': 'Oranges', 'value': 'oranges', 'disabled': true}
-    ]
+    ],
+    optionHeight: 50
 };
 
-ReactDOM.render(<Dropdown {...properties}/>, mountNode);`
+ReactDOM.render(<Dropdown {...properties} />, mountNode);`
 
 const GraphExample = `const properties = {
     animate: true,
@@ -278,7 +246,7 @@ class Controller extends Component {
     constructor() {
         super();
         this.state = {
-            values: ['melons', 'apples']
+            value: ['melons', 'apples']
         };
     }
 
@@ -287,7 +255,7 @@ class Controller extends Component {
             setProps={(props) => {
                 this.setState(props);
             }}
-            values={this.state.values}
+            value={this.state.value}
             {...properties}
         />);
     }
@@ -296,19 +264,47 @@ class Controller extends Component {
 ReactDOM.render(<Controller/>, mountNode);`
 
 
+const DatePickerRangeExample = `
+const properties = {
+    id: 'my date',
+    start_date_id: 'start',
+    end_date_id: 'end'
+};
+
+class Controller extends Component {
+
+    render() {
+        // Use last 7, next 7 days as allowed range
+        const today = new Date();
+        const min_date_allowed = new Date();
+        const max_date_allowed = new Date();
+        min_date_allowed.setDate(today.getDate() - 7);
+        max_date_allowed.setDate(today.getDate() + 7);
+
+        return (<DatePickerRange
+            // split on time to get YYYY-MM-DD
+            min_date_allowed={min_date_allowed.toISOString().split('T')[0]}
+            max_date_allowed={max_date_allowed.toISOString().split('T')[0]}
+            {...properties}
+        />);
+    }
+}
+
+ReactDOM.render(<Controller/>, mountNode);`
+
 
 const examples = [
     {name: 'Upload', code: UploadExample},
     {name: 'Markdown', code: MarkdownExample},
     {name: 'Interval', code: SetTimeoutExample},
     {name: 'Graph', code: GraphExample},
-    {name: 'SyntaxHighlighter', code: SyntaxHighlighterExample},
     {name: 'Radio', code: RadioExample},
     {name: 'Checklist', code: ChecklistExample},
     {name: 'Dropdown', code: DropdownExample},
     {name: 'Slider', code: SliderExample},
     {name: 'RangeSlider', code: RangeSliderExample},
-    {name: 'Input', code: InputExample}
+    {name: 'Input', code: InputExample},
+    {name: 'DatePickerRange', code: DatePickerRangeExample}
 ];
 
 class Demo extends Component {
@@ -316,14 +312,13 @@ class Demo extends Component {
         return (
             <div style={{'fontFamily': 'Sans-Serif'}}>
                 <h1>Dash Core Component Suite Demo</h1>
-
                 {examples.map((example, index) =>
                     <div key={index}>
                         <div style={{'marginBottom': 150}}>
                             <h3>{example.name}</h3>
                             <Playground
                                 codeText={example.code}
-                                scope={{Component, React, ReactDOM, Checklist, Dropdown, Graph, Input, RadioItems, RangeSlider, Slider, SyntaxHighlighter, Interval, Markdown, Upload}}
+                                scope={{Component, React, ReactDOM, Checklist, DatePickerRange, Dropdown, Graph, Input, RadioItems, RangeSlider, Slider, Interval, Markdown, Upload}}
                                 noRender={false}
                                 theme={'xq-light'}
                             />

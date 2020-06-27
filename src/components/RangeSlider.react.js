@@ -1,75 +1,29 @@
-import React, {Component} from 'react';
+import React, {Component, lazy, Suspense} from 'react';
 import PropTypes from 'prop-types';
-import {omit} from 'ramda';
-import {Range} from 'rc-slider';
+import rangeSlider from '../utils/LazyLoader/rangeSlider';
+
+const RealRangeSlider = lazy(rangeSlider);
 
 /**
  * A double slider with two handles.
  * Used for specifying a range of numerical values.
  */
 export default class RangeSlider extends Component {
-    constructor(props) {
-        super(props);
-        this.propsToState = this.propsToState.bind(this);
-    }
-
-    propsToState(newProps) {
-        this.setState({value: newProps.value});
-    }
-
-    componentWillReceiveProps(newProps) {
-        this.propsToState(newProps);
-    }
-
-    componentWillMount() {
-        this.propsToState(this.props);
-    }
-
     render() {
-        const {
-            className,
-            id,
-            loading_state,
-            setProps,
-            updatemode,
-            vertical,
-        } = this.props;
-        const value = this.state.value;
-
         return (
-            <div
-                id={id}
-                data-dash-is-loading={
-                    (loading_state && loading_state.is_loading) || undefined
-                }
-                className={className}
-                style={vertical ? {height: '100%'} : {}}
-            >
-                <Range
-                    onChange={value => {
-                        if (updatemode === 'drag') {
-                            setProps({value});
-                        } else {
-                            this.setState({value});
-                        }
-                    }}
-                    onAfterChange={value => {
-                        if (updatemode === 'mouseup') {
-                            setProps({value});
-                        }
-                    }}
-                    value={value}
-                    {...omit(
-                        ['className', 'value', 'setProps', 'updatemode'],
-                        this.props
-                    )}
-                />
-            </div>
+            <Suspense fallback={null}>
+                <RealRangeSlider {...this.props} />
+            </Suspense>
         );
     }
 }
 
 RangeSlider.propTypes = {
+    /**
+     * The ID of this component, used to identify dash components
+     * in callbacks. The ID needs to be unique across all of the
+     * components in an app.
+     */
     id: PropTypes.string,
 
     /**
@@ -148,6 +102,34 @@ RangeSlider.propTypes = {
     pushable: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
 
     /**
+     * Configuration for tooltips describing the current slider values
+     */
+    tooltip: PropTypes.exact({
+        /**
+         * Determines whether tooltips should always be visible
+         * (as opposed to the default, visible on hover)
+         */
+        always_visible: PropTypes.bool,
+
+        /**
+         * Determines the placement of tooltips
+         * See https://github.com/react-component/tooltip#api
+         * top/bottom{*} sets the _origin_ of the tooltip, so e.g. `topLeft`
+         * will in reality appear to be on the top right of the handle
+         */
+        placement: PropTypes.oneOf([
+            'left',
+            'right',
+            'top',
+            'bottom',
+            'topLeft',
+            'topRight',
+            'bottomLeft',
+            'bottomRight',
+        ]),
+    }),
+
+    /**
      * Value by which increments or decrements are made
      */
     step: PropTypes.number,
@@ -156,6 +138,11 @@ RangeSlider.propTypes = {
      * If true, the slider will be vertical
      */
     vertical: PropTypes.bool,
+
+    /**
+     * The height, in px, of the slider if it is vertical.
+     */
+    verticalHeight: PropTypes.number,
 
     /**
      * Determines when the component should update
@@ -190,8 +177,43 @@ RangeSlider.propTypes = {
          */
         component_name: PropTypes.string,
     }),
+
+    /**
+     * Used to allow user interactions in this component to be persisted when
+     * the component - or the page - is refreshed. If `persisted` is truthy and
+     * hasn't changed from its previous value, a `value` that the user has
+     * changed while using the app will keep that change, as long as
+     * the new `value` also matches what was given originally.
+     * Used in conjunction with `persistence_type`.
+     */
+    persistence: PropTypes.oneOfType([
+        PropTypes.bool,
+        PropTypes.string,
+        PropTypes.number,
+    ]),
+
+    /**
+     * Properties whose user interactions will persist after refreshing the
+     * component or the page. Since only `value` is allowed this prop can
+     * normally be ignored.
+     */
+    persisted_props: PropTypes.arrayOf(PropTypes.oneOf(['value'])),
+
+    /**
+     * Where persisted user changes will be stored:
+     * memory: only kept in memory, reset on page refresh.
+     * local: window.localStorage, data is kept after the browser quit.
+     * session: window.sessionStorage, data is cleared once the browser quit.
+     */
+    persistence_type: PropTypes.oneOf(['local', 'session', 'memory']),
 };
 
 RangeSlider.defaultProps = {
     updatemode: 'mouseup',
+    persisted_props: ['value'],
+    persistence_type: 'local',
+    verticalHeight: 400,
 };
+
+export const propTypes = RangeSlider.propTypes;
+export const defaultProps = RangeSlider.defaultProps;

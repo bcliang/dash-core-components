@@ -24,17 +24,17 @@ Custom usage:
 - Create a logout button component and assign it the logout_url
 `dcc.LogoutButton(logout_url='/logout')`
 
-See https://dash.plot.ly/dash-core-components/logout_button
+See https://dash.plotly.com/dash-core-components/logout_button
 for more documentation and examples.
 
 Keyword arguments:
 - id (string; optional): Id of the button.
-- label (string; optional): Text of the button
+- label (string; default 'Logout'): Text of the button
 - logout_url (string; optional): Url to submit a post logout request.
 - style (dict; optional): Style of the button
-- method (string; optional): Http method to submit the logout form.
+- method (string; default 'post'): Http method to submit the logout form.
 - className (string; optional): CSS class for the button.
-- loading_state (optional): Object that holds the loading state object coming from dash-renderer. loading_state has the following type: dict containing keys 'is_loading', 'prop_name', 'component_name'.
+- loading_state (dict; optional): Object that holds the loading state object coming from dash-renderer. loading_state has the following type: dict containing keys 'is_loading', 'prop_name', 'component_name'.
 Those keys have the following types:
   - is_loading (boolean; optional): Determines if the component is loading or not
   - prop_name (string; optional): Holds which property is loading

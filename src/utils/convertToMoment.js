@@ -1,5 +1,5 @@
 import moment from 'moment';
-import R from 'ramda';
+import {has} from 'ramda';
 
 export default (newProps, momentProps) => {
     const dest = {};
@@ -11,12 +11,18 @@ export default (newProps, momentProps) => {
             dest[key] = null;
 
             if (key === 'initial_visible_month') {
-                dest[key] = moment();
+                dest[key] = moment(
+                    newProps.start_date ||
+                        newProps.min_date_allowed ||
+                        newProps.end_date ||
+                        newProps.max_date_allowed ||
+                        undefined
+                );
             }
         } else {
             dest[key] = moment(value);
 
-            if (key === 'max_date_allowed' && R.has(key, dest)) {
+            if (key === 'max_date_allowed' && has(key, dest)) {
                 dest[key].add(1, 'days');
             }
         }

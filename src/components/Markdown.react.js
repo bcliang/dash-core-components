@@ -1,7 +1,8 @@
-import React from 'react';
 import PropTypes from 'prop-types';
-import {omit, propOr, type} from 'ramda';
-import Markdown from 'react-markdown';
+import React, {Component, lazy, Suspense} from 'react';
+import markdown from '../utils/LazyLoader/markdown';
+
+const RealDashMarkdown = lazy(markdown);
 
 // eslint-disable-next-line valid-jsdoc
 /**
@@ -9,41 +10,27 @@ import Markdown from 'react-markdown';
  * GitHub Markdown spec. These component uses
  * [react-markdown](https://rexxars.github.io/react-markdown/) under the hood.
  */
-function DashMarkdown(props) {
-    if (type(props.children) === 'Array') {
-        props.children = props.children.join('\n');
+export default class DashMarkdown extends Component {
+    render() {
+        return (
+            <Suspense fallback={null}>
+                <RealDashMarkdown {...this.props} />
+            </Suspense>
+        );
     }
-
-    return (
-        <div
-            id={props.id}
-            data-dash-is-loading={
-                (props.loading_state && props.loading_state.is_loading) ||
-                undefined
-            }
-            {...propOr({}, 'containerProps', props)}
-        >
-            <Markdown
-                source={props.children}
-                escapeHtml={!props.dangerously_allow_html}
-                {...omit(['containerProps'], props)}
-            />
-        </div>
-    );
 }
 
 DashMarkdown.propTypes = {
+    /**
+     * The ID of this component, used to identify dash components
+     * in callbacks. The ID needs to be unique across all of the
+     * components in an app.
+     */
     id: PropTypes.string,
     /**
      * Class name of the container element
      */
     className: PropTypes.string,
-
-    /**
-     * An object containing custom element props to put on the container
-     * element such as id or style
-     */
-    containerProps: PropTypes.object,
 
     /**
      * A boolean to control raw HTML escaping.
@@ -62,6 +49,24 @@ DashMarkdown.propTypes = {
     ]),
 
     /**
+     * Remove matching leading whitespace from all lines.
+     * Lines that are empty, or contain *only* whitespace, are ignored.
+     * Both spaces and tab characters are removed, but only if they match;
+     * we will not convert tabs to spaces or vice versa.
+     */
+    dedent: PropTypes.bool,
+
+    /**
+     * Config options for syntax highlighting.
+     */
+    highlight_config: PropTypes.exact({
+        /**
+         * Color scheme; default 'light'
+         */
+        theme: PropTypes.oneOf(['dark', 'light']),
+    }),
+
+    /**
      * Object that holds the loading state object coming from dash-renderer
      */
     loading_state: PropTypes.shape({
@@ -78,10 +83,18 @@ DashMarkdown.propTypes = {
          */
         component_name: PropTypes.string,
     }),
+
+    /**
+     * User-defined inline styles for the rendered Markdown
+     */
+    style: PropTypes.object,
 };
 
 DashMarkdown.defaultProps = {
     dangerously_allow_html: false,
+    highlight_config: {},
+    dedent: true,
 };
 
-export default DashMarkdown;
+export const propTypes = DashMarkdown.propTypes;
+export const defaultProps = DashMarkdown.defaultProps;
