@@ -405,7 +405,6 @@ class PlotlyGraph extends Component {
 
         return (
             <div
-                key={id}
                 data-dash-is-loading={
                     (loading_state && loading_state.is_loading) || undefined
                 }
@@ -422,6 +421,7 @@ class PlotlyGraph extends Component {
                 />
                 <div 
                     id={id}
+                    key={id}
                     ref={this.gd} 
                     style={{height: '100%', width: '100%'}} 
                 />
