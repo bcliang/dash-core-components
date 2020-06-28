@@ -7,9 +7,9 @@ import dash_core_components as dcc
 from dash.dependencies import Input, Output, State, ClientsideFunction
 from dash.exceptions import PreventUpdate
 
-
-def test_extg007_clientside(dash_duo):
-    app = dash.Dash(__name__)
+@pytest.mark.parametrize("is_eager", [True, False])
+def test_grcc001_clientside_relayout(dash_duo, is_eager):
+    app = dash.Dash(__name__, eager_loading=is_eager)
     initial_graph_title = "initial title"
     header = html.Div(
         id='header',
